@@ -25,7 +25,6 @@ router.get('/', function (req, res, next) {
 router.get('/:id', function (req, res, next) {
 
     const { id } = req.params
-    console.log(id)
 
     fs.readFile(dbFile, 'utf-8', (err, data) => {
         if (err) throw err;
@@ -76,5 +75,28 @@ router.post(
 
 
     });
+
+/* deletes the note with the specified ID */
+router.delete('/:id', function (req, res, next) {
+
+    const { id } = req.params
+
+    fs.readFile(dbFile, 'utf-8', (err, data) => {
+        if (err) throw err;
+
+        const allNotes = JSON.parse(data).notes
+
+        const newNotes = { notes: allNotes.filter(note => note.id !== id) }
+
+        const newJSONFile = JSON.stringify(newNotes, null, 4)
+
+        fs.writeFile(dbFile, newJSONFile, 'utf-8', () => {
+            res.json({
+                deleted: true
+            })
+        })
+
+    });
+})
 
 module.exports = router;
