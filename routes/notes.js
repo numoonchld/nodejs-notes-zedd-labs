@@ -3,40 +3,59 @@ const router = express.Router();
 const fs = require('fs')
 const dbFile = 'data/db.json'
 const { v4: uuidv4 } = require('uuid');
+const { body, validationResult } = require('express-validator');
 
 /* return list of all notes */
 router.get('/', function (req, res, next) {
-    res.send('respond with a resource');
-});
-
-/* new note with the given title and body */
-router.post('/', function (req, res, next) {
-
-    const { title, body } = req.body
-
-    const newNote = { id: uuidv4(), title, body }
-
 
     fs.readFile(dbFile, 'utf-8', (err, data) => {
         if (err) throw err;
 
         const existingNotes = JSON.parse(data).notes
-        console.log({ existingNotes });
 
-        const newNotes = { notes: [newNote, ...existingNotes] }
-
-        const newJSONFile = JSON.stringify(newNotes, null, 4)
-
-        fs.writeFile(dbFile, newJSONFile, 'utf-8', () => {
-            res.json({
-                status: 'ok',
-                newNote
-            });
+        res.json({
+            allNotes: existingNotes
         })
 
     });
 
-
 });
+
+/* new note with the given title and body */
+router.post(
+    '/',
+    body('title').isLength({ min: 15 }),
+    body('body').isLength({ min: 140 }),
+    function (req, res, next) {
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { title, body } = req.body
+
+        const newNote = { id: uuidv4(), title, body }
+
+
+        fs.readFile(dbFile, 'utf-8', (err, data) => {
+            if (err) throw err;
+
+            const existingNotes = JSON.parse(data).notes
+
+            const newNotes = { notes: [newNote, ...existingNotes] }
+
+            const newJSONFile = JSON.stringify(newNotes, null, 4)
+
+            fs.writeFile(dbFile, newJSONFile, 'utf-8', () => {
+                res.json({
+                    newNote
+                });
+            })
+
+        });
+
+
+    });
 
 module.exports = router;
