@@ -76,6 +76,45 @@ router.post(
 
     });
 
+/* new note with the given title and body */
+router.put(
+    '/:id',
+    body('title').isLength({ min: 15 }),
+    body('body').isLength({ min: 140 }),
+    function (req, res, next) {
+
+        const { id } = req.params
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { title, body } = req.body
+
+        const newNote = { id, title, body }
+
+
+        fs.readFile(dbFile, 'utf-8', (err, data) => {
+            if (err) throw err;
+
+            const existingNotes = JSON.parse(data).notes.filter(note => note.id !== id)
+
+            const newNotes = { notes: [newNote, ...existingNotes] }
+
+            const newJSONFile = JSON.stringify(newNotes, null, 4)
+
+            fs.writeFile(dbFile, newJSONFile, 'utf-8', () => {
+                res.json({
+                    newNote
+                });
+            })
+
+        });
+
+
+    });
+
 /* deletes the note with the specified ID */
 router.delete('/:id', function (req, res, next) {
 
