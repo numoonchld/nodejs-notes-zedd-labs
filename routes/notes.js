@@ -21,6 +21,25 @@ router.get('/', function (req, res, next) {
 
 });
 
+/* return note by id */
+router.get('/:id', function (req, res, next) {
+
+    const { id } = req.params
+    console.log(id)
+
+    fs.readFile(dbFile, 'utf-8', (err, data) => {
+        if (err) throw err;
+
+        const extractedNote = JSON.parse(data).notes.filter(note => note.id === id)
+
+        res.json({
+            note: extractedNote
+        })
+
+    });
+
+});
+
 /* new note with the given title and body */
 router.post(
     '/',
